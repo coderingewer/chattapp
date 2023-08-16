@@ -34,6 +34,8 @@ func NewMessage(c *gin.Context) {
 }
 func NewChat(c *gin.Context) {
 	chat := models.Chat{}
+	userID := c.Request.Header.Get("userId")
+	recieverID := c.Request.Header.Get("recieverID")
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"status": http.StatusUnprocessableEntity})
@@ -45,14 +47,17 @@ func NewChat(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"status": http.StatusUnprocessableEntity})
 		return
 	}
-
+	if chat.CheckParticipant(userID, recieverID) == false {
+		c.JSON(http.StatusNotFound, gin.H{"status": "Hata"})
+		return
+	}
+	chat.SpecialID = userID + "+" + recieverID
 	chatSaved, err := chat.NewChat()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ERROR": err.Error()})
 		return
 	}
-	userID := c.Request.Header.Get("userId")
-	recieverID := c.Request.Header.Get("recieverID")
+
 	ids := [2]string{userID, recieverID}
 	for _, v := range ids {
 		participant := models.Participant{}
@@ -68,7 +73,7 @@ func NewChat(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"status": err})
 			return
 		}
-		chatSaved.Participant = append(chatSaved.Participant, participantSaved)
+		chatSaved.Participants = append(chatSaved.Participants, participantSaved)
 	}
 	c.JSON(http.StatusOK, chatSaved)
 }

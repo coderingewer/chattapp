@@ -9,6 +9,8 @@ import (
 )
 
 func main() {
+	hub := models.NewHub()
+	go hub.Run()
 	router := gin.Default()
 	//Url için api linkleri
 
@@ -32,11 +34,9 @@ func main() {
 	chat.GET("/getbyId/:id", controllers.GetChatByID)
 	chat.GET("/getall", controllers.GetAllChats)
 
-	chat.GET("/ws", func(ctx *gin.Context) {
-		models.HandleWebSocket(ctx)
-	})
-	chat.GET("/room/:chatID", func(ctx *gin.Context) {
+	chat.GET("/ws/:chatId", func(ctx *gin.Context) {
 		models.JoinRoom(ctx)
+
 	})
 
 	router.Run("localhost:8080")
